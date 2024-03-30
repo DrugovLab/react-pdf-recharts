@@ -1,0 +1,7 @@
+{
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "*.ts": "${capture}.test.ts, ${capture}.test.tsx, ${capture}.test.pdf",
+        "*.tsx": "${capture}.test.ts, ${capture}.test.tsx, ${capture}.test.pdf",
+    }
+}
