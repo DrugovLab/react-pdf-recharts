@@ -4,7 +4,6 @@
   "main": "./dist/index.js",
   "author": "Drugov Nikita",
   "license": "MIT",
-  "exports": "./dist/*",
   "scripts": {
     "build": "rm -rf dist && tsc --build tsconfig.build.json",
     "test": "jest",
