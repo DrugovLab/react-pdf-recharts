@@ -54,8 +54,8 @@ export type StyleUpdateQuery = {
     [selector: string]: Style | ((props: ElementProps) => ElementProps)
 }
 
-export type ChartWrapperProps = React.PropsWithChildren<{
-    responsive?: boolean;
+export type SvgWrapperProps = React.PropsWithChildren<{
+    reachartResponsive?: boolean;
     baseFontSize?: number;
     propsUpdateQuery?: PropsUpdateQuery;
     styleUpdateQuery?: StyleUpdateQuery;

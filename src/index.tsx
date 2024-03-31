@@ -2,7 +2,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server';
 import HTMLReactParser, { HTMLReactParserOptions } from 'html-react-parser'
 import { ElementType } from 'domelementtype'
-import { ChartWrapperProps, StyleUpdateQuery, Transformer, TransformerData } from './types';
+import { SvgWrapperProps, StyleUpdateQuery, Transformer, TransformerData } from './types';
 import {
     CircleTransformer,
     ClipPathTransformer,
@@ -55,10 +55,10 @@ const transformers: Transformer[] = [
     LiTransformer,
 ];
 
-export default function ChartWrapper(props: ChartWrapperProps) {
+export default function SvgWrapper(props: SvgWrapperProps) {
 
     const {
-        responsive = true,
+        reachartResponsive = true,
         baseFontSize = 11,
         propsUpdateQuery: elementProps = {},
         styleUpdateQuery: elementStyles = {}
@@ -98,7 +98,7 @@ export default function ChartWrapper(props: ChartWrapperProps) {
         }
     };
 
-    let chartElement = HTMLReactParser(html, parserOptions);
+    let svgElement = HTMLReactParser(html, parserOptions);
 
     const defaultElementStyles: StyleUpdateQuery = {
         'tspan, text, span': {
@@ -123,7 +123,7 @@ export default function ChartWrapper(props: ChartWrapperProps) {
         },
     }
 
-    if (responsive) {
+    if (reachartResponsive) {
         defaultElementStyles['.recharts-wrapper, .recharts-wrapper > svg'] = {
             width: '100%',
             height: 'auto'
@@ -137,8 +137,8 @@ export default function ChartWrapper(props: ChartWrapperProps) {
     );
 
     updatePropsQueries.forEach(([selector, props]) => {
-        chartElement = updateProperties(chartElement, selector, props);
+        svgElement = updateProperties(svgElement, selector, props);
     });
 
-    return chartElement;
+    return svgElement;
 }
