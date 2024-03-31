@@ -1,11 +1,12 @@
 {
-  "name": "react-pdf-recharts",
-  "version": "1.0.0",
+  "name": "react-pdf-svg",
+  "version": "0.0.1",
   "main": "./dist/index.js",
   "author": "Drugov Nikita",
   "license": "MIT",
+  "exports": "./dist/*",
   "scripts": {
-    "build": "rm -rf dist && tsc --build",
+    "build": "rm -rf dist && tsc --build tsconfig.build.json",
     "test": "jest",
     "test:watch": "jest --watchAll"
   },
@@ -24,7 +25,6 @@
     "@types/react-dom": "^18.2.23",
     "domelementtype": "^2.3.0",
     "jest": "^29.7.0",
-    "recharts": "^2.12.3",
     "ts-jest": "^29.1.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.7.1",

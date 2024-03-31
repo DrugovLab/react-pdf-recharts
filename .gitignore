@@ -4,4 +4,5 @@ node_modules
 # Ignore built ts files
 dist/**/*
 /tests/index.test.pdf
+/example
 /example/example.pdf
