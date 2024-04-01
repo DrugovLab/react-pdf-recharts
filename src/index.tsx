@@ -1,64 +1,76 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server';
-import HTMLReactParser, { HTMLReactParserOptions } from 'html-react-parser'
+import { domToReact, HTMLReactParserOptions } from 'html-react-parser'
 import { ElementType } from 'domelementtype'
-import { SvgWrapperProps, StyleUpdateQuery, Transformer, TransformerData } from './types';
+import { SvgWrapperProps, StyleUpdateQuery } from './types';
 import {
-    CircleTransformer,
-    ClipPathTransformer,
-    DefsTransformer,
-    DivTransformer,
-    EllipseTransformer,
-    GTransformer,
-    LiTransformer,
-    LineTransformer,
-    LinearGradientTransformer,
-    PathTransformer,
-    PolylineTransformer,
-    PolygonTransformer,
-    RadialGradientTransformer,
-    RectTransformer,
-    SpanTransformer,
-    StopTransformer,
-    SvgTransformer,
-    TextTransformer,
-    TspanTransformer,
-    UlTransformer,
-    UnitValueTransformer,
-    ViewTransformer
-} from './transformers';
-import { updateProperties } from './utils';
+    CircleConverter,
+    ClipPathConverter,
+    DefsConverter,
+    DivConverter,
+    EllipseConverter,
+    GConverter,
+    LiConverter,
+    LineConverter,
+    LinearGradientConverter,
+    PathConverter,
+    PolylineConverter,
+    PolygonConverter,
+    RadialGradientConverter,
+    RectConverter,
+    SpanConverter,
+    StopConverter,
+    SvgConverter,
+    TextConverter,
+    TspanConverter,
+    UlConverter,
+    ViewConverter,
+    INodeConverter
+} from './converters';
+import htmlToDOM from 'html-dom-parser';
+import CSSselect from 'css-select'
+import deepmerge from 'deepmerge';
 
-const transformers: Transformer[] = [
-    UnitValueTransformer,
-    DivTransformer,
-    ViewTransformer,
-    SvgTransformer,
-    LineTransformer,
-    PolylineTransformer,
-    PolygonTransformer,
-    PathTransformer,
-    RectTransformer,
-    CircleTransformer,
-    EllipseTransformer,
-    TextTransformer,
-    TspanTransformer,
-    SpanTransformer,
-    // TitleTransformer,
-    GTransformer,
-    StopTransformer,
-    DefsTransformer,
-    ClipPathTransformer,
-    LinearGradientTransformer,
-    RadialGradientTransformer,
-    UlTransformer,
-    LiTransformer,
+const converters: INodeConverter[] = [
+    DivConverter,
+    ViewConverter,
+    SvgConverter,
+    LineConverter,
+    PolylineConverter,
+    PolygonConverter,
+    PathConverter,
+    RectConverter,
+    CircleConverter,
+    EllipseConverter,
+    TextConverter,
+    TspanConverter,
+    SpanConverter,
+    // TitleConverter,
+    GConverter,
+    StopConverter,
+    DefsConverter,
+    ClipPathConverter,
+    LinearGradientConverter,
+    RadialGradientConverter,
+    UlConverter,
+    LiConverter,
 ];
+
+function convertUnitValue(value: string | number, fontSize: number) {
+    const stringValue = value.toString();
+    if (stringValue.endsWith('rem')) {
+        return Number.parseFloat(stringValue.split('rem')[0]) * fontSize;
+    }
+    if (stringValue.endsWith('em')) {
+        return Number.parseFloat(stringValue.split('em')[0]) * fontSize;
+    }
+    return value;
+}
 
 export default function SvgWrapper(props: SvgWrapperProps) {
 
     const {
-        reachartResponsive = true,
+        rechartResponsive = true,
         baseFontSize = 11,
         propsUpdateQuery: elementProps = {},
         styleUpdateQuery: elementStyles = {}
@@ -66,39 +78,7 @@ export default function SvgWrapper(props: SvgWrapperProps) {
 
     let html = renderToStaticMarkup(props.children);
 
-    const parserOptions: HTMLReactParserOptions = {
-
-        transform(reactNode: any, domNode, index) {
-
-            switch (domNode.type) {
-                case ElementType.Text:
-                    return domNode.data;
-                case ElementType.Tag:
-                    const element = reactNode as React.ReactElement;
-                    const data: TransformerData = {
-                        element,
-                        children: element.props.children,
-                        domNode,
-                        index,
-                        key: element.key || index.toString(),
-                        settings: {
-                            baseFontSize
-                        }
-                    }
-                    for (const transformer of transformers) {
-                        data.element = transformer(data);
-                        data.children = data.element?.props?.children;
-                    }
-                    const transformed = data.element != null && data.element.type != reactNode.type;
-                    return transformed ? data.element : null;
-
-                default:
-                    return null;
-            }
-        }
-    };
-
-    let svgElement = HTMLReactParser(html, parserOptions);
+    const dom = htmlToDOM(html, { lowerCaseAttributeNames: false });
 
     const defaultElementStyles: StyleUpdateQuery = {
         'tspan, text, span': {
@@ -123,7 +103,7 @@ export default function SvgWrapper(props: SvgWrapperProps) {
         },
     }
 
-    if (reachartResponsive) {
+    if (rechartResponsive) {
         defaultElementStyles['.recharts-wrapper, .recharts-wrapper > svg'] = {
             width: '100%',
             height: 'auto'
@@ -136,9 +116,68 @@ export default function SvgWrapper(props: SvgWrapperProps) {
             .map(([selector, style]) => ([selector, { style }]))
     );
 
-    updatePropsQueries.forEach(([selector, props]) => {
-        svgElement = updateProperties(svgElement, selector, props);
-    });
+    const nodeAdditionalProps = updatePropsQueries.flatMap(([selector, newProps]) =>
+        CSSselect(selector, dom).map(node => ({
+            node,
+            additionalPropsGetter: (currentProps: any) => {
+                if (typeof newProps === 'function') {
+                    return newProps(currentProps);
+                }
+                return newProps;
+            }
+        }))
+    );
 
-    return svgElement;
+    const parserOptions: HTMLReactParserOptions = {
+
+        transform(reactNode: any, domNode, index) {
+
+            switch (domNode.type) {
+                case ElementType.Text:
+                    return domNode.data;
+                case ElementType.Tag:
+
+                    const converter = converters.find(x => x.nodeName == domNode.name)?.convert;
+                    if (!converter) return null;
+                    
+                    const { style, strokeDasharray, children, ...otherProps } = reactNode.props;
+
+                    const newProps = {
+                        key: otherProps.key || reactNode.key || index
+                    } as any;
+
+                    const fontSize = style?.fontSize || baseFontSize;
+                    if (style) {
+                        newProps.style = {};
+                        Object.entries(style)
+                            .filter(([prop, value]) => value != null)
+                            .forEach(([prop, value]) => {
+                                newProps.style[prop] = convertUnitValue(value as any, fontSize);
+                            });
+                    }
+                    if (strokeDasharray) {
+                        newProps.strokeDasharray = strokeDasharray.split(' ').join(', ');
+                    }
+                    if (domNode.name == 'tspan') {
+                        newProps.dx = convertUnitValue(otherProps.dx || 0, fontSize);
+                        newProps.dy = convertUnitValue(otherProps.dy || 0, fontSize);
+                    }
+
+                    let element = converter(deepmerge.all([otherProps, newProps]), children);
+
+                    let finalProps = element.props;
+                    nodeAdditionalProps.filter(x => x.node == domNode).forEach(({ additionalPropsGetter }) => {
+                        finalProps = deepmerge(finalProps, additionalPropsGetter(finalProps));
+                    });
+                    element = React.cloneElement(element, finalProps);
+
+                    return element;
+
+                default:
+                    return null;
+            }
+        }
+    };
+
+    return domToReact(dom, parserOptions);
 }

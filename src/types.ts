@@ -18,29 +18,6 @@ import {
     RadialGradientProps
 } from '@react-pdf/renderer';
 import type { Style } from '@react-pdf/types'
-import { Element } from 'domhandler'
-
-export type TransformSettings = {
-    baseFontSize: number;
-}
-
-export type TransformerData = {
-    element: React.ReactElement | null;
-    children: React.ReactElement | React.ReactElement[] | null;
-    domNode: Element;
-    index: number;
-    key: string | null;
-    settings: TransformSettings;
-}
-
-export type Transformer = (data: TransformerData) => React.ReactElement | null;
-
-export type FlatDomItem = {
-    element: JSX.Element,
-    parentElement: JSX.Element | null;
-    parent: FlatDomItem | null;
-    index: number;
-};
 
 export type ElementProps = ViewProps | SVGProps | LineProps | PolylineProps | PolygonProps | PathProps | RectProps |
     CircleProps | EllipseProps | SVGTextProps | TspanProps | GProps | StopProps | DefsProps |
@@ -51,11 +28,11 @@ export type PropsUpdateQuery = {
 }
 
 export type StyleUpdateQuery = {
-    [selector: string]: Style | ((props: ElementProps) => ElementProps)
+    [selector: string]: Style | ((props: ElementProps) => Style)
 }
 
 export type SvgWrapperProps = React.PropsWithChildren<{
-    reachartResponsive?: boolean;
+    rechartResponsive?: boolean;
     baseFontSize?: number;
     propsUpdateQuery?: PropsUpdateQuery;
     styleUpdateQuery?: StyleUpdateQuery;

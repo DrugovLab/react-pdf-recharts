@@ -1,4 +1,5 @@
 .vscode
+__tests__
 example
 src
 tests
