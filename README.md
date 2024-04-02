@@ -71,7 +71,7 @@ const data = [
 
 const MyDocument = () => (
     <Document>
-        <Page size="A4" style={styles.page}>
+        <Page size="A4">
             <SvgWrapper baseFontSize={9}>
                 <LineChart width={500} height={300} data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3" />
