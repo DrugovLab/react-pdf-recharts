@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "commonjs",
   "repository": "github:DrugovLab/react-pdf-svg",
+  "keywords": ["react-pdf", "react", "pdf", "svg", "chart", "recharts", "victory"],
   "scripts": {
     "build": "rm -rf dist && tsc --build tsconfig.build.json",
     "test": "jest",
